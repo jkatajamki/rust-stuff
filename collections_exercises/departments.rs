@@ -7,6 +7,7 @@ fn main() {
   loop {
     println!("Enter command:");
     println!("Example: Add <name> to <department>");
+    println!("Or: List <department|all>");
 
     let mut input = String::new();
 
@@ -14,24 +15,45 @@ fn main() {
     let command = input.trim();
     let v: Vec<&str> = command.split(' ').collect();
 
-    let input_name = String::from(v[1]);
-    let input_department = String::from(v[3]);
+    let input_command = String::from(v[0]);
 
-    let matching_name = departments.get(&input_department);
-    match matching_name {
-      Some(x) => {
-        let mut new_names = x.to_vec();
-        new_names.push(input_name);
+    if input_command.to_lowercase() == "list" {
+      let list_target = String::from(v[1]);
 
-        departments.insert(input_department, new_names);
-      },
-      None => {
-        let new_names = vec![String::from(&input_name)];
+      if list_target.to_lowercase() == "all" {
+        println!("Departments: {:?}", departments);
+        continue;
+      }
 
-        departments.insert(input_department, new_names);
-      },
+      match departments.get(&list_target) {
+        Some(x) => {
+          println!("Department {}: {:?}", list_target, x);
+        },
+        None => {
+          println!("No department found by {}!", list_target);
+        }
+      }
     }
 
-    println!("Departments: {:?}", departments);
+    if input_command.to_lowercase() == "add" {
+      let input_name = String::from(v[1]);
+      let input_department = String::from(v[3]);
+
+      let matching_name = departments.get(&input_department);
+      match matching_name {
+        Some(x) => {
+          let mut new_names = x.to_vec();
+          new_names.push(input_name);
+
+          departments.insert(input_department, new_names);
+        },
+        None => {
+          let new_names = vec![String::from(&input_name)];
+
+          departments.insert(input_department, new_names);
+        },
+      }
+    }
+
   }
 }
