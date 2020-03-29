@@ -30,3 +30,29 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
   Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn it_initializes_config() {
+    let args = vec!["programname".to_string(), "first".into(), "second".into()];
+
+    let config = Config::new(&args).unwrap();
+
+    assert_eq!(&args[1], &config.query);
+    assert_eq!(&args[2], &config.filename);
+  }
+
+  #[test]
+  fn it_fails_to_init_config() {
+    let args = vec!["programname".to_string(), "first".into()];
+
+    let result = Config::new(&args).is_err();
+
+    let expected = true;
+
+    assert_eq!(result, expected);
+  }
+}
