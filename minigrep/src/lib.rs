@@ -10,13 +10,22 @@ pub struct Config {
 }
 
 impl Config {
-  pub fn new(args: &[String]) -> Result<Config, &'static str> {
-    if args.len() < 3 {
-      return Err("not enough arguments")
-    }
+  pub fn new<T>(mut args: T) -> Result<Config, &'static str>
+    where T: Iterator<Item = String>
+  {
+    // First arg is name of the program, which is ignored
+    args.next();
 
-    let query = args[1].clone();
-    let filename = args[2].clone();
+    let query = match args.next() {
+      Some(arg) => arg,
+      None => return Err("Didn't get a query string"),
+    };
+
+    let filename = match args.next() {
+      Some(arg) => arg,
+      None => return Err("Didn't get a file name"),
+    };
+
     let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 
     Ok(Config { query, filename, case_sensitive })
@@ -43,28 +52,17 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-  let mut results = Vec::new();
-
-  for line in contents.lines() {
-    if line.contains(query) {
-      results.push(line);
-    }
-  }
-
-  results
+  contents.lines()
+    .filter(|line| line.contains(query))
+    .collect()
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-  let query = query.to_lowercase();
-  let mut results = Vec::new();
+  let query_lower = query.to_lowercase();
 
-  for line in contents.lines() {
-    if line.to_lowercase().contains(&query) {
-      results.push(line);
-    }
-  }
-
-  results
+  contents.lines()
+    .filter(|line| line.to_lowercase().contains(&query_lower))
+    .collect()
 }
 
 #[cfg(test)]
@@ -73,19 +71,20 @@ mod tests {
 
   #[test]
   fn it_initializes_config() {
-    let args = vec!["programname".to_string(), "first".into(), "second".into()];
+    let arg_strs = ["programname", "first", "second"];
+    let args = arg_strs.iter().map(|s| s.to_string());
 
-    let config = Config::new(&args).unwrap();
+    let config = Config::new(args).unwrap();
 
-    assert_eq!(&args[1], &config.query);
-    assert_eq!(&args[2], &config.filename);
+    assert_eq!(arg_strs[1], config.query);
+    assert_eq!(arg_strs[2], config.filename);
   }
 
   #[test]
   fn it_fails_to_init_config() {
-    let args = vec!["programname".to_string(), "first".into()];
+    let args = ["programname", "first"].iter().map(|s| s.to_string());
 
-    let result = Config::new(&args).is_err();
+    let result = Config::new(args).is_err();
 
     let expected = true;
 
