@@ -1,15 +1,26 @@
 use std::thread;
 use std::sync::mpsc;
+use std::time::Duration;
 
 fn main() {
   let (tx, rx) = mpsc::channel();
 
   thread::spawn(move || {
-    let val = String::from("hi ho");
+    let vals = vec![
+      String::from("hi"),
+      String::from("ho"),
+      String::from("let's"),
+      String::from("go"),
+    ];
 
-    tx.send(val).unwrap();
+    for val in vals {
+      tx.send(val).unwrap();
+
+      thread::sleep(Duration::from_secs(1));
+    }
   });
 
-  let received = rx.recv().unwrap();
-  println!("Knowledge divined from beyond the veil: {}", received);
+  for received in rx {
+    println!("Knowledge divined from beyond the veil: {}", received);
+  }
 }
